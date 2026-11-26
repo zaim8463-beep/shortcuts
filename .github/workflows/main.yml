@@ -17,14 +17,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Find the Gradle project
+      - name: Prepare project (unzip if needed)
         id: find
         run: |
           FILE=$(find . -name settings.gradle.kts -not -path './.git/*' | head -n 1)
           if [ -z "$FILE" ]; then
-            echo "settings.gradle.kts was not found. Files in the repo:"
-            find . -not -path './.git/*' | head -50
-            exit 1
+            ZIP=$(find . -maxdepth 1 -name '*.zip' | head -n 1)
+            if [ -z "$ZIP" ]; then
+              echo "No project and no zip found. Files in the repo:"
+              find . -not -path './.git/*' | head -50
+              exit 1
+            fi
+            echo "Unzipping $ZIP"
+            mkdir -p project
+            unzip -o "$ZIP" -d project
+            FILE=$(find project -name settings.gradle.kts | head -n 1)
           fi
           DIR=$(dirname "$FILE")
           echo "Project folder: $DIR"
